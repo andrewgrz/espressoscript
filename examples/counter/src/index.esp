@@ -3,9 +3,14 @@ def main() -> int {
   (1 + 2) * (50 - 36) / 6 + a
 }
 
+def add(a: int, b: int) -> int {
+  a + b
+}
+
+def no_return(a: int, b: int) -> int {
+  a + b;
+}
 
 pub def double_add(a: int, b: int,) -> int {
   add(a, b) + add(a, b)
 }
-
-let test_var = 40;

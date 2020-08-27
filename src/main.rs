@@ -1,8 +1,11 @@
+use crate::error::CompileError;
 use clap::Clap;
 use std::fs;
 use std::io::Read;
 
 mod ast;
+mod compiler;
+mod error;
 mod grammar;
 
 /// The EspressoScript compiler
@@ -18,14 +21,21 @@ struct Opts {
     output: String,
 }
 
-fn main() {
+fn main() -> Result<(), CompileError> {
     println!("Welcome to the EspressoScript compiler!");
     let opts: Opts = Opts::parse();
+    println!("Compiling: {:?} to {:?}", &opts.input, &opts.output);
 
     let mut contents = String::new();
     let _ = fs::File::open(&opts.input)
         .expect(&format!("Unable to open: {}", &opts.input))
         .read_to_string(&mut contents);
 
-    println!("{:#?}", grammar::grammar::module(&contents));
+    match grammar::grammar::module(&contents) {
+        Ok(result) => {
+            compiler::codegen::compile_to_file(result, opts.output)?;
+            Ok(())
+        }
+        Err(e) => Err(CompileError::from(e)),
+    }
 }

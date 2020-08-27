@@ -6,13 +6,10 @@ peg::parser! {
       = s:statement()* { ModuleAst::from_statements(s) }
 
     rule statement() -> StatementAst
-      = _ s:(function_stmt() / expr_stmt()) _ { s }
+      = _ s:function_stmt() _ { s }
 
     rule function_stmt() -> StatementAst
       = s:function_def() { StatementAst::Function(s) }
-
-    rule expr_stmt() -> StatementAst
-      = s:expr() ";" { StatementAst::Expression(s) }
 
     rule function_def() -> FunctionAst
       = is_pub:("pub")? _ "def" _ name:ident() _ "(" _ fn_args:arg() ** "," _ ","? _ ")" _ "->" _ r_type:ident() _ exprs:block() _

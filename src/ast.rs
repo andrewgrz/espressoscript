@@ -1,3 +1,5 @@
+use std::fmt;
+
 /// Represented a Parsed Module
 #[derive(Debug, Clone)]
 pub struct ModuleAst {
@@ -12,7 +14,6 @@ impl ModuleAst {
 
 #[derive(Debug, Clone)]
 pub enum StatementAst {
-    Expression(ExprAst),
     Function(FunctionAst),
 }
 
@@ -102,6 +103,17 @@ pub enum BinOpAst {
     Div,
 }
 
+impl fmt::Display for BinOpAst {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            BinOpAst::Add => write!(f, "+"),
+            BinOpAst::Sub => write!(f, "-"),
+            BinOpAst::Mul => write!(f, "*"),
+            BinOpAst::Div => write!(f, "/"),
+        }
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct IdentAst {
     pub name: String,
@@ -119,5 +131,11 @@ impl IdentAst {
 
     pub fn as_string(&self) -> String {
         self.name.clone()
+    }
+}
+
+impl fmt::Display for IdentAst {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.name)
     }
 }
