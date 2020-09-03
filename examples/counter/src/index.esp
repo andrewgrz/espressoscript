@@ -1,6 +1,15 @@
-def main() -> int {
-  let a = 20 - 10;
-  (1 + 2) * (50 - 36) / 6 + a
+def handles_if(a: bool) -> int {
+  if a {
+    4
+  } else {
+    5
+  }
+}
+
+def main(a: bool) -> int {
+  let b = 20 - 10;
+  (1 + 2) * (50 - 36) / 6 + b;
+  handles_if(a)
 }
 
 def add(a: int, b: int) -> int {

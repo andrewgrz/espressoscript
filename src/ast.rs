@@ -67,8 +67,8 @@ pub struct FunctionArgAst {
 
 #[derive(Debug, Clone)]
 pub enum ExprAst {
+    Boolean(bool),
     Integer(i64),
-    Float(f64),
     Variable(IdentAst),
     FunctionCall {
         name: IdentAst,
@@ -83,6 +83,11 @@ pub enum ExprAst {
         lhs: Box<ExprAst>,
         op: BinOpAst,
         rhs: Box<ExprAst>,
+    },
+    If {
+        cond_expr: Box<ExprAst>,
+        then_expr: Box<ExprAst>,
+        else_expr: Box<ExprAst>,
     },
 }
 
@@ -114,7 +119,7 @@ impl fmt::Display for BinOpAst {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct IdentAst {
     pub name: String,
 }

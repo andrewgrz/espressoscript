@@ -7,6 +7,7 @@ mod ast;
 mod compiler;
 mod error;
 mod grammar;
+mod typechecker;
 
 /// The EspressoScript compiler
 #[derive(Clap)]

@@ -50,7 +50,10 @@ impl Compiler {
                 }
             }
         }
-        write!(output, "console.log(main());")?;
+        write!(
+            output,
+            "document.getElementById(\"app-root\").innerHTML = main(true)"
+        )?;
         Ok(output)
     }
 
@@ -74,7 +77,7 @@ impl Compiler {
 
         match **expr {
             ExprAst::Integer(ref i) => write!(output, "{}", i)?,
-            ExprAst::Float(ref f) => write!(output, "{}", f)?,
+            ExprAst::Boolean(ref f) => write!(output, "{}", f)?,
             ExprAst::Variable(ref v) => write!(output, "{}", v)?,
             ExprAst::FunctionCall { ref name, ref args } => {
                 write!(output, "{}(", name)?;
@@ -98,6 +101,19 @@ impl Compiler {
                 self.visit_expr(&lhs, output)?;
                 write!(output, "{}", op)?;
                 self.visit_expr(&rhs, output)?;
+            }
+            ExprAst::If {
+                ref cond_expr,
+                ref then_expr,
+                ref else_expr,
+            } => {
+                write!(output, "((")?;
+                self.visit_expr(cond_expr, output)?;
+                write!(output, ")?(")?;
+                self.visit_expr(then_expr, output)?;
+                write!(output, "):(")?;
+                self.visit_expr(else_expr, output)?;
+                write!(output, "))")?;
             }
         }
         Ok(())

@@ -32,9 +32,13 @@ peg::parser! {
        x:(@) "/" y:@ { ExprAst::Binary {lhs: Box::new(x), op: BinOpAst::Div, rhs: Box::new(y)} }
        --
        // For all rules in this level, we need to provide spaces around the expr
-       _ n:(assignment() / function_call() / integer() / variable()) _ { n }
+       _ n:(if_expr() / assignment() / function_call() / integer() / bool() / variable()) _ { n }
        _ "(" _ e:expr() _ ")" _ { e }
     }
+
+    rule if_expr() -> ExprAst
+      = "if" _ cond_expr:expr() _ "{" _ then_expr:expr() _ "}" _ "else" _ "{" _ else_expr:expr() _"}"
+      { ExprAst::If { cond_expr: Box::new(cond_expr), then_expr: Box::new(then_expr), else_expr: Box::new(else_expr) } }
 
     rule assignment() -> ExprAst
       = "let" _ name:ident() _ maybe_type:assign_type()? _"=" _ expr:expr() { ExprAst::Assignment { name, maybe_type, expr: Box::new(expr) } }
@@ -47,6 +51,15 @@ peg::parser! {
 
     rule variable() -> ExprAst
       = i:ident() { ExprAst::Variable(i) }
+
+    rule bool() -> ExprAst
+      = i:(bool_true() / bool_false()) { i }
+
+    rule bool_true() -> ExprAst
+      = i:"true" { ExprAst::Boolean(true) }
+
+    rule bool_false() -> ExprAst
+      = i:"false" { ExprAst::Boolean(false) }
 
     rule integer() -> ExprAst
       = n:$(['0'..='9']+) { ExprAst::Integer(n.parse().unwrap()) } / expected!("integer")

@@ -7,6 +7,7 @@ use std::{fmt, io};
 pub enum CompileError {
     ParseError(String),
     SyntaxError(String),
+    TypeError(String),
     IoError(io::Error),
     FmtError(fmt::Error),
 }
