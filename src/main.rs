@@ -34,6 +34,7 @@ fn main() -> Result<(), CompileError> {
 
     match grammar::grammar::module(&contents) {
         Ok(result) => {
+            typechecker::TypeChecker::new().check_module(&result)?;
             compiler::codegen::compile_to_file(result, opts.output)?;
             Ok(())
         }

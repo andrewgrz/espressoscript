@@ -37,8 +37,8 @@ peg::parser! {
     }
 
     rule if_expr() -> ExprAst
-      = "if" _ cond_expr:expr() _ "{" _ then_expr:expr() _ "}" _ "else" _ "{" _ else_expr:expr() _"}"
-      { ExprAst::If { cond_expr: Box::new(cond_expr), then_expr: Box::new(then_expr), else_expr: Box::new(else_expr) } }
+      = "if" _ cond_expr:expr() _ then_expr:block() _ "else" _ else_expr:block() _
+      { ExprAst::If { cond_expr: Box::new(cond_expr), then_expr, else_expr } }
 
     rule assignment() -> ExprAst
       = "let" _ name:ident() _ maybe_type:assign_type()? _"=" _ expr:expr() { ExprAst::Assignment { name, maybe_type, expr: Box::new(expr) } }

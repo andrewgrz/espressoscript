@@ -19,7 +19,14 @@ impl TypeCheckerCore {
         unimplemented!()
     }
 
-    pub fn func(&mut self, args: Vec<Value>, ret: Value) -> Value {
+    pub fn integer(&mut self) -> Value {
+        unimplemented!()
+    }
+    pub fn integer_use(&mut self) -> Use {
+        unimplemented!()
+    }
+
+    pub fn func(&mut self, args: Vec<Use>, ret: Value) -> Value {
         unimplemented!()
     }
     pub fn func_use(&mut self, args: Vec<Value>, ret: Use) -> Use {
@@ -28,5 +35,9 @@ impl TypeCheckerCore {
 
     pub fn flow(&mut self, lhs: Value, rhs: Use) -> Result<(), CompileError> {
         unimplemented!()
+    }
+
+    pub fn new() -> TypeCheckerCore {
+        TypeCheckerCore
     }
 }

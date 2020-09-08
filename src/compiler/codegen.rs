@@ -107,13 +107,13 @@ impl Compiler {
                 ref then_expr,
                 ref else_expr,
             } => {
-                write!(output, "((")?;
+                write!(output, "(function(){{if(")?;
                 self.visit_expr(cond_expr, output)?;
-                write!(output, ")?(")?;
-                self.visit_expr(then_expr, output)?;
-                write!(output, "):(")?;
-                self.visit_expr(else_expr, output)?;
-                write!(output, "))")?;
+                write!(output, "){{")?;
+                self.visit_block(then_expr, output)?;
+                write!(output, "}}else{{")?;
+                self.visit_block(else_expr, output)?;
+                write!(output, "}}}})()")?;
             }
         }
         Ok(())

@@ -86,8 +86,8 @@ pub enum ExprAst {
     },
     If {
         cond_expr: Box<ExprAst>,
-        then_expr: Box<ExprAst>,
-        else_expr: Box<ExprAst>,
+        then_expr: BlockAst,
+        else_expr: BlockAst,
     },
 }
 

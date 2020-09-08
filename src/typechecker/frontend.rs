@@ -1,31 +1,95 @@
-use crate::ast::{ExprAst, IdentAst};
+use crate::ast::{BlockAst, ExprAst, IdentAst, ModuleAst, StatementAst};
 use crate::error::CompileError;
 use crate::typechecker::core::{TypeCheckerCore, Value};
 use std::collections::HashMap;
 
-struct Bindings {
-    m: HashMap<IdentAst, Value>,
+#[derive(Debug)]
+pub struct Bindings<'a> {
+    parent: Option<&'a Bindings<'a>>,
+    symbols: HashMap<IdentAst, Value>,
 }
 
-impl Bindings {
-    fn new() -> Self {
-        Self { m: HashMap::new() }
+impl<'a> Bindings<'a> {
+    pub fn new_module_scope() -> Bindings<'a> {
+        let table = Bindings {
+            parent: None,
+            symbols: HashMap::new(),
+        };
+        // TODO: Add builtins to here
+        table
     }
 
-    fn get(&self, k: &IdentAst) -> Option<Value> {
-        self.m.get(k).copied()
+    fn push(&self) -> Bindings {
+        Bindings {
+            parent: Some(&self),
+            symbols: HashMap::new(),
+        }
     }
 
     fn insert(&mut self, k: IdentAst, v: Value) {
-        self.m.insert(k.clone(), v);
+        self.symbols.insert(k, v);
     }
 
-    fn in_child_scope<T>(&mut self, cb: impl FnOnce(&mut Self) -> T) -> T {
-        let mut child_scope = Bindings { m: self.m.clone() };
-        cb(&mut child_scope)
+    fn resolve(&self, name: &IdentAst) -> Option<Value> {
+        match self.symbols.get(name) {
+            Some(s) => Some(*s),
+            None => match &self.parent {
+                Some(p) => p.resolve(name),
+                None => None,
+            },
+        }
     }
 }
 
+#[must_use = "Result of Frontend checking must be used"]
+pub fn check_module(
+    engine: &mut TypeCheckerCore,
+    bindings: &mut Bindings,
+    module_ast: &ModuleAst,
+) -> Result<(), CompileError> {
+    for stmt in &module_ast.statements {
+        match stmt {
+            StatementAst::Function(func) => {
+                let mut local_bindings = bindings.push();
+                let mut arg_bounds = Vec::new();
+                for arg in &func.fn_args {
+                    let (arg_type, arg_bound) = engine.var();
+                    local_bindings.insert(arg.name.clone(), arg_type);
+                    arg_bounds.push(arg_bound);
+                }
+                let body_type = check_block(engine, &mut local_bindings, &func.block)?;
+                engine.func(arg_bounds, body_type);
+            }
+        }
+    }
+
+    Ok(())
+}
+
+#[must_use = "Result of Frontend checking must be used"]
+fn check_block(
+    engine: &mut TypeCheckerCore,
+    bindings: &mut Bindings,
+    block: &BlockAst,
+) -> Result<Value, CompileError> {
+    if block.exprs.len() == 0 {
+        return Ok(Value);
+    }
+
+    // Check all the expression in the block
+    for x in 0..block.exprs.len() - 1 {
+        check_expr(engine, bindings, &block.exprs.last().unwrap())?;
+    }
+
+    if block.trailing_semi {
+        Ok(Value)
+    } else {
+        // This unwrap won't fail as we know the length is at least one
+        check_expr(engine, bindings, &block.exprs.last().unwrap())
+    }
+}
+
+#[must_use = "Result of Frontend checking must be used"]
 fn check_expr(
     engine: &mut TypeCheckerCore,
     bindings: &mut Bindings,
@@ -34,14 +98,14 @@ fn check_expr(
     use ExprAst::*;
     match **expr {
         Boolean(_) => Ok(engine.bool()),
-        Integer(_) => unimplemented!(),
+        Integer(_) => Ok(engine.integer()),
         Binary { .. } => unimplemented!(),
-        Variable(ref name) => bindings.get(name).ok_or_else(|| {
+        Variable(ref name) => bindings.resolve(name).ok_or_else(|| {
             CompileError::SyntaxError(format!("Undefined variable {}", name)).into()
         }),
         FunctionCall { ref name, ref args } => {
             let func_type = bindings
-                .get(name)
+                .resolve(name)
                 .ok_or_else(|| CompileError::SyntaxError(format!("Undefined function {}", name)))?;
 
             let mut arg_types = Vec::new();
@@ -58,9 +122,7 @@ fn check_expr(
             ref name, ref expr, ..
         } => {
             let var_type = check_expr(engine, bindings, expr)?;
-            bindings.in_child_scope(|bindings| {
-                bindings.insert(name.clone(), var_type);
-            });
+            bindings.insert(name.clone(), var_type);
             Ok(Value)
         }
         If {
@@ -72,8 +134,8 @@ fn check_expr(
             let bound = engine.bool_use();
             engine.flow(cond_type, bound)?;
 
-            let then_type = check_expr(engine, bindings, then_expr)?;
-            let else_type = check_expr(engine, bindings, else_expr)?;
+            let then_type = check_block(engine, &mut bindings.push(), then_expr)?;
+            let else_type = check_block(engine, &mut bindings.push(), else_expr)?;
 
             let (merged, merged_bound) = engine.var();
             engine.flow(then_type, merged_bound)?;
