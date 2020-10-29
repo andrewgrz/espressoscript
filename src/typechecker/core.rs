@@ -1,9 +1,12 @@
 use crate::error::CompileError;
 
+type ID = usize;
+
 #[derive(Copy, Clone, Debug)]
-pub struct Value;
+pub struct Value(ID);
 #[derive(Copy, Clone, Debug)]
-pub struct Use;
+pub struct Use(ID);
+
 
 pub struct TypeCheckerCore;
 
